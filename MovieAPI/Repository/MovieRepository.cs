@@ -79,12 +79,12 @@ public class MovieRepository : IMovieRepository
                 .ToListAsync();
         }
 
-        public async Task<Movie> GetMovieById(int movieId) // Add this implementation
+        public async Task<Movie> GetMovieById(int movieId) 
         {
             return await _context.Movies.FindAsync(movieId);
         }
 
-        public async Task<IEnumerable<Movie>> GetMoviesByName(string name) // Add this implementation
+        public async Task<IEnumerable<Movie>> GetMoviesByName(string name) 
         {
             return await _context.Movies
                 .Where(m => EF.Functions.Like(m.Title, $"%{name}%"))

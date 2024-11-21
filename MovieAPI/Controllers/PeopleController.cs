@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Data;
+using MovieAPI.Data.Service;
 using MovieAPI.Models;
 
 namespace MovieAPI.Controllers;
@@ -10,26 +11,52 @@ namespace MovieAPI.Controllers;
 [ApiController]
 public class PeopleController :ControllerBase
 {
+    private readonly IPeopleService _peopleService;
     private readonly MovieDbContext _context;
 
-    public PeopleController(MovieDbContext context)
+    public PeopleController(IPeopleService peopleService)
     {
-        _context = context;
+        _peopleService = peopleService;
     }
     // GET: api/people/name/{name}
     [HttpGet("name/{name}")]
     public async Task<ActionResult<IEnumerable<Person>>> GetPersonByName(string name, [FromQuery] int maxResults = 10)
     {
-        var people = await _context.People
-            .Where(p => EF.Functions.Like(p.Name, $"%{name}%"))
-            .Take(maxResults)
-            .ToListAsync();
+        var people = await _peopleService.GetPeopleByName(name, maxResults);
 
-        if (people == null || !people.Any())
+        if (!people.Any())
         {
             return NotFound("No person found with the given name.");
         }
 
         return Ok(people);
+    }
+    
+// GET: api/people/{personId}/starred?includeOmdbDetails=true
+    [HttpGet("{personId}/starred")]
+    public async Task<ActionResult<IEnumerable<Movie>>> GetMoviesStarredInByPerson(int personId, [FromQuery] bool includeOmdbDetails = false)
+    {
+        var movies = await _peopleService.GetMoviesStarredInByPerson(personId, includeOmdbDetails);
+
+        if (!movies.Any())
+        {
+            return NotFound("No movies found where the person is a star.");
+        }
+
+        return Ok(movies);
+    }
+
+    // GET: api/people/{personId}/directed
+    [HttpGet("{personId}/directed")]
+    public async Task<ActionResult<IEnumerable<Movie>>> GetMoviesDirectedByPerson(int personId)
+    {
+        var movies = await _peopleService.GetMoviesDirectedByPerson(personId);
+
+        if (!movies.Any())
+        {
+            return NotFound("No movies found where the person is a director.");
+        }
+
+        return Ok(movies);
     }
 }

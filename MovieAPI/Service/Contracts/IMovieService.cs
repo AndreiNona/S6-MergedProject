@@ -11,4 +11,5 @@ public interface IMovieService
     Task<IEnumerable<Person>> GetDirectorsByMovieId(int movieId);
     Task<Movie> GetMovieById(int movieId);  
     Task<OmdbMovie> GetMovieFromOmdb(int id);
+
 }

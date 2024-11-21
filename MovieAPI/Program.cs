@@ -17,9 +17,14 @@ builder.Services.AddHttpClient<MovieApiService>();
 builder.Services.AddDbContext<MovieDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MovieDB")));
 
-// Register repository and service dependencies for DI
+// Register repository and service dependencies
+builder.Services.AddScoped<IPeopleService, PeopleService>();
+builder.Services.AddScoped<IPeopleRepository, PeopleRepository>();
+
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
+
+builder.Services.AddScoped<IMovieDetailsService, MovieDetailsService>();
 
 // Add Swagger generation services
 builder.Services.AddEndpointsApiExplorer();
