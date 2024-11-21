@@ -12,12 +12,16 @@ namespace MovieAPI.Data
 
         public DbSet<Movie> Movies { get; set; }
         public DbSet<Person> People { get; set; }
+        public DbSet<Star> Stars { get; set; }
+        public DbSet<Director> Directors { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Mark Rating as a keyless entity
+            // Mark as a keyless entity
             modelBuilder.Entity<Rating>().HasNoKey();
+            modelBuilder.Entity<Star>().HasNoKey();
+            modelBuilder.Entity<Director>().HasNoKey();
         }
     }
 }

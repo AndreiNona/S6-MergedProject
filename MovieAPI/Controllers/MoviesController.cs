@@ -21,13 +21,16 @@ namespace MovieAPI.Controllers
             _context = context;
             _movieApiService = movieApiService;
         }
-        // GET: api/movies/name/Last?smartSearch=true&wordComplete=true&limit=10
+        
+        
+        // GET: api/movies/name/Last?smartSearch=true&wordComplete=true&limit=10&includeOmdbDetails=true
         [HttpGet("name/{name}")]
         public async Task<ActionResult<IEnumerable<Movie>>> SearchMoviesByName(
             string name,
             [FromQuery] bool smartSearch = false,
             [FromQuery] bool wordComplete = true,
-            [FromQuery] int limit = 10)
+            [FromQuery] int limit = 10,
+            [FromQuery] bool includeOmdbDetails = false)
         {
             var query = _context.Movies.AsQueryable();
 
@@ -57,30 +60,18 @@ namespace MovieAPI.Controllers
                 return NotFound();
             }
 
-            // Fetch OMDb details for each movie TODO: Make optional (very slow for many movies)
-            var tasks = movies.Select(async movie =>
+            if (includeOmdbDetails)
             {
-                try
-                {
-                    var (poster, genre, ratings) = await _movieApiService.GetMovieDetailsFromOmdb(movie.Id, _omdbApiKey);
-                    movie.Poster = poster;
-                    movie.Genre = genre;
-                    movie.Ratings = ratings;
-                }
-                catch (HttpRequestException ex)
-                {
-                    Console.WriteLine($"Failed to fetch OMDb data for movie ID {movie.Id}: {ex.Message}");
-                }
-            });
-
-            await Task.WhenAll(tasks);
+                await AddOmdbDetailsToMovies(movies);
+            }
 
             return Ok(movies);
         }
 
-        // GET: api/movies/year/2001?limit=10
+
+        // GET: api/movies/year/2001?limit=10&includeOmdbDetails=true
         [HttpGet("year/{year}")]
-        public async Task<ActionResult<IEnumerable<Movie>>> GetMoviesByYear(int year, [FromQuery] int limit = 10)
+        public async Task<ActionResult<IEnumerable<Movie>>> GetMoviesByYear(int year, [FromQuery] int limit = 10, [FromQuery] bool includeOmdbDetails = false)
         {
             var movies = await _context.Movies
                 .Where(m => m.Year == year)
@@ -92,29 +83,19 @@ namespace MovieAPI.Controllers
                 return NotFound();
             }
 
-            var tasks = movies.Select(async movie =>
+            if (includeOmdbDetails)
             {
-                try
-                {
-                    var (poster, genre, ratings) = await _movieApiService.GetMovieDetailsFromOmdb(movie.Id, _omdbApiKey);
-                    movie.Poster = poster;
-                    movie.Genre = genre;
-                    movie.Ratings = ratings;
-                }
-                catch (HttpRequestException ex)
-                {
-                    Console.WriteLine($"Failed to fetch OMDb data for movie ID {movie.Id}: {ex.Message}");
-                }
-            });
+                await AddOmdbDetailsToMovies(movies);
+            }
 
-            await Task.WhenAll(tasks);
 
             return Ok(movies);
         }
 
-        // GET: api/movies/range?start=2001&end=2002&limit=10
+
+        // GET: api/movies/range?start=2001&end=2002&limit=10&includeOmdbDetails=true
         [HttpGet("range")]
-        public async Task<ActionResult<IEnumerable<Movie>>> GetMoviesByYearRange([FromQuery] int? start, [FromQuery] int? end, [FromQuery] int limit = 10)
+        public async Task<ActionResult<IEnumerable<Movie>>> GetMoviesByYearRange([FromQuery] int? start, [FromQuery] int? end, [FromQuery] int limit = 10, [FromQuery] bool includeOmdbDetails = false)
         {
             if (start == null && end == null)
             {
@@ -140,6 +121,67 @@ namespace MovieAPI.Controllers
                 return NotFound();
             }
 
+            if (includeOmdbDetails)
+            {
+                await AddOmdbDetailsToMovies(movies);
+            }
+
+            return Ok(movies);
+        }
+        
+        // GET: api/movies/{movieId}/stars
+        [HttpGet("{movieId}/stars")]
+        public async Task<ActionResult<IEnumerable<Person>>> GetStarsByMovieId(int movieId)
+        {
+            // Query the Star table 
+            var stars = await _context.Stars
+                .Where(s => s.MovieId == movieId)
+                .Select(s => s.Person)
+                .ToListAsync();
+
+            if (stars == null || !stars.Any())
+            {
+                return NotFound("No stars found for the given movie.");
+            }
+
+            return Ok(stars);
+        }
+        
+        // GET: api/movies/{movieId}/directors
+        [HttpGet("{movieId}/directors")]
+        public async Task<ActionResult<IEnumerable<Person>>> GetDirectorsByMovieId(int movieId)
+        {
+            // Query the Director table 
+            var directors = await _context.Directors
+                .Where(d => d.MovieId == movieId)
+                .Select(d => d.Person)
+                .ToListAsync();
+
+            if (directors == null || !directors.Any())
+            {
+                return NotFound("No directors found for the given movie.");
+            }
+
+            return Ok(directors);
+        }
+        
+        // GET: api/movies/omdb/146592
+        [HttpGet("omdb/{id}")]
+        public async Task<ActionResult<OmdbMovie>> GetMovieFromOmdb(int id)
+        {
+            try
+            {
+                var movie = await _movieApiService.GetMovieFromOmdb(id, _omdbApiKey);
+                return Ok(movie);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        
+        private async Task AddOmdbDetailsToMovies(IEnumerable<Movie> movies)
+        {
             var tasks = movies.Select(async movie =>
             {
                 try
@@ -156,23 +198,6 @@ namespace MovieAPI.Controllers
             });
 
             await Task.WhenAll(tasks);
-
-            return Ok(movies);
-        }
-        
-        // GET: api/movies/omdb/146592
-        [HttpGet("omdb/{id}")]
-        public async Task<ActionResult<OmdbMovie>> GetMovieFromOmdb(int id)
-        {
-            try
-            {
-                var movie = await _movieApiService.GetMovieFromOmdb(id, _omdbApiKey);
-                return Ok(movie);
-            }
-            catch (HttpRequestException ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
         }
     }
 }

@@ -169,3 +169,4 @@ C:\Users\ioana\source\repos\MovieAPI\MovieAPI\obj\Debug\net8.0\refint\MovieAPI.d
 C:\Users\ioana\source\repos\MovieAPI\MovieAPI\obj\Debug\net8.0\MovieAPI.pdb
 C:\Users\ioana\source\repos\MovieAPI\MovieAPI\obj\Debug\net8.0\MovieAPI.genruntimeconfig.cache
 C:\Users\ioana\source\repos\MovieAPI\MovieAPI\obj\Debug\net8.0\ref\MovieAPI.dll
+C:\Users\ioana\source\repos\MovieAPI\MovieAPI\obj\Debug\net8.0\MovieAPI.sourcelink.json
