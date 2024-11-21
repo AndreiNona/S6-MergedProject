@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MovieAPI.Data;
+using MovieAPI.Data.Service;
 using MovieAPI.Models;
 using MovieAPI.Services;
 
@@ -10,16 +11,11 @@ namespace MovieAPI.Controllers
     [ApiController]
     public class MoviesController : ControllerBase
     {
-        private readonly MovieDbContext _context;
-        private readonly MovieApiService _movieApiService;
-        
-        // Declare the API key 
-        private readonly string _omdbApiKey = "2b567777";
-        
-        public MoviesController(MovieDbContext context, MovieApiService movieApiService)
+        private readonly IMovieService _movieService;
+
+        public MoviesController(IMovieService movieService)
         {
-            _context = context;
-            _movieApiService = movieApiService;
+            _movieService = movieService;
         }
         
         
@@ -32,37 +28,11 @@ namespace MovieAPI.Controllers
             [FromQuery] int limit = 10,
             [FromQuery] bool includeOmdbDetails = false)
         {
-            var query = _context.Movies.AsQueryable();
-
-            if (smartSearch)
-            {
-                if (!wordComplete)
-                {
-                    query = query.Where(m => EF.Functions.Like(m.Title, $"% {name} %") ||
-                                             EF.Functions.Like(m.Title, $"{name} %") ||
-                                             EF.Functions.Like(m.Title, $"% {name}") ||
-                                             m.Title == name);
-                }
-                else
-                {
-                    query = query.Where(m => EF.Functions.Like(m.Title, $"%{name}%"));
-                }
-            }
-            else
-            {
-                query = query.Where(m => m.Title == name);
-            }
-
-            var movies = await query.Take(limit).ToListAsync();
+            var movies = await _movieService.SearchMoviesByName(name, smartSearch, wordComplete, limit, includeOmdbDetails);
 
             if (!movies.Any())
             {
                 return NotFound();
-            }
-
-            if (includeOmdbDetails)
-            {
-                await AddOmdbDetailsToMovies(movies);
             }
 
             return Ok(movies);
@@ -73,24 +43,16 @@ namespace MovieAPI.Controllers
         [HttpGet("year/{year}")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetMoviesByYear(int year, [FromQuery] int limit = 10, [FromQuery] bool includeOmdbDetails = false)
         {
-            var movies = await _context.Movies
-                .Where(m => m.Year == year)
-                .Take(limit)
-                .ToListAsync();
+            var movies = await _movieService.GetMoviesByYear(year, limit, includeOmdbDetails);
 
             if (!movies.Any())
             {
                 return NotFound();
             }
 
-            if (includeOmdbDetails)
-            {
-                await AddOmdbDetailsToMovies(movies);
-            }
-
-
             return Ok(movies);
         }
+
 
 
         // GET: api/movies/range?start=2001&end=2002&limit=10&includeOmdbDetails=true
@@ -102,28 +64,11 @@ namespace MovieAPI.Controllers
                 return BadRequest("At least one of 'start' or 'end' must be provided.");
             }
 
-            var query = _context.Movies.AsQueryable();
-
-            if (start != null)
-            {
-                query = query.Where(m => m.Year >= start);
-            }
-
-            if (end != null)
-            {
-                query = query.Where(m => m.Year <= end);
-            }
-
-            var movies = await query.Take(limit).ToListAsync();
+            var movies = await _movieService.GetMoviesByYearRange(start, end, limit, includeOmdbDetails);
 
             if (!movies.Any())
             {
                 return NotFound();
-            }
-
-            if (includeOmdbDetails)
-            {
-                await AddOmdbDetailsToMovies(movies);
             }
 
             return Ok(movies);
@@ -133,13 +78,9 @@ namespace MovieAPI.Controllers
         [HttpGet("{movieId}/stars")]
         public async Task<ActionResult<IEnumerable<Person>>> GetStarsByMovieId(int movieId)
         {
-            // Query the Star table 
-            var stars = await _context.Stars
-                .Where(s => s.MovieId == movieId)
-                .Select(s => s.Person)
-                .ToListAsync();
+            var stars = await _movieService.GetStarsByMovieId(movieId);
 
-            if (stars == null || !stars.Any())
+            if (!stars.Any())
             {
                 return NotFound("No stars found for the given movie.");
             }
@@ -151,13 +92,9 @@ namespace MovieAPI.Controllers
         [HttpGet("{movieId}/directors")]
         public async Task<ActionResult<IEnumerable<Person>>> GetDirectorsByMovieId(int movieId)
         {
-            // Query the Director table 
-            var directors = await _context.Directors
-                .Where(d => d.MovieId == movieId)
-                .Select(d => d.Person)
-                .ToListAsync();
+            var directors = await _movieService.GetDirectorsByMovieId(movieId);
 
-            if (directors == null || !directors.Any())
+            if (!directors.Any())
             {
                 return NotFound("No directors found for the given movie.");
             }
@@ -169,15 +106,14 @@ namespace MovieAPI.Controllers
         [HttpGet("omdb/{id}")]
         public async Task<ActionResult<OmdbMovie>> GetMovieFromOmdb(int id)
         {
-            try
+            var movie = await _movieService.GetMovieFromOmdb(id);
+
+            if (movie == null)
             {
-                var movie = await _movieApiService.GetMovieFromOmdb(id, _omdbApiKey);
-                return Ok(movie);
+                return NotFound();
             }
-            catch (HttpRequestException ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+
+            return Ok(movie);
         }
         
         private async Task AddOmdbDetailsToMovies(IEnumerable<Movie> movies)
@@ -186,10 +122,13 @@ namespace MovieAPI.Controllers
             {
                 try
                 {
-                    var (poster, genre, ratings) = await _movieApiService.GetMovieDetailsFromOmdb(movie.Id, _omdbApiKey);
-                    movie.Poster = poster;
-                    movie.Genre = genre;
-                    movie.Ratings = ratings;
+                    var omdbMovie = await _movieService.GetMovieFromOmdb(movie.Id);
+                    if (omdbMovie != null)
+                    {
+                        movie.Poster = omdbMovie.Poster;
+                        movie.Genre = omdbMovie.Genre;
+                        movie.Ratings = omdbMovie.Ratings;
+                    }
                 }
                 catch (HttpRequestException ex)
                 {

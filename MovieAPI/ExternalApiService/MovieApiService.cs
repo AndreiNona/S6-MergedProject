@@ -70,5 +70,6 @@ namespace MovieAPI.Services
             // Return only the necessary fields
             return (omdbMovie.Poster, omdbMovie.Genre, omdbMovie.Ratings);
         }
+        
     }
 }
