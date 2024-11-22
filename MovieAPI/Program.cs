@@ -60,11 +60,40 @@ builder.Services.AddScoped<IMovieService, MovieService>();
 
 builder.Services.AddScoped<IMovieDetailsService, MovieDetailsService>();
 
+builder.Services.AddScoped<ITopListService, TopListService>();
+builder.Services.AddScoped<ITopListRepository, TopListRepository>();
+
 // Add Swagger generation services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "MovieAPI", Version = "v1" });
+
+    // Add JWT Bearer Authentication
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer' followed by a space and your JWT token",
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 var app = builder.Build();

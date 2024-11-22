@@ -85,6 +85,7 @@ namespace MovieAPI.Controllers;
 
             return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
         }
+        
         [Authorize]
         [HttpGet("protected-endpoint")]
         public IActionResult ProtectedEndpoint()
