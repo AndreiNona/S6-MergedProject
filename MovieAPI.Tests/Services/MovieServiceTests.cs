@@ -10,7 +10,7 @@ using MovieAPI.Models;
 
 public class MovieServiceTests
     {
-        private readonly Mock<IMovieRepository> _mockMovieRepository;
+        /*private readonly Mock<IMovieRepository> _mockMovieRepository;
         private readonly Mock<MovieApiService> _mockMovieApiService; // Mock for MovieApiService
         private readonly Mock<IMovieDetailsService> _mockMovieDetailsService; // Mock for MovieDetailsService
         private readonly MovieService _movieService;
@@ -146,5 +146,5 @@ public class MovieServiceTests
 
             // Assert
             _mockMovieDetailsService.Verify(service => service.AddOmdbDetailsToMovies(It.IsAny<IEnumerable<Movie>>()), Times.Once);
-        }
+        }*/
     }

@@ -1,11 +1,20 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MovieAPI.Data;
 using MovieAPI.Services;
 using MovieAPI.Data.Repository;
 using MovieAPI.Data.Service;
+using MovieAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Authentication with JWT Bearer Tokens
+var jwtSettings = builder.Configuration.GetSection("JWT");
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -16,6 +25,31 @@ builder.Services.AddHttpClient<MovieApiService>();
 // Register MovieDbContext with SQL Server configuration
 builder.Services.AddDbContext<MovieDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MovieDB")));
+
+// Add ASP.NET Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<MovieDbContext>()
+    .AddDefaultTokenProviders();
+
+// Configure Authentication with JWT Bearer Tokens
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+});
 
 // Register repository and service dependencies
 builder.Services.AddScoped<IPeopleService, PeopleService>();
@@ -45,7 +79,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseAuthentication(); // Add Authentication Middleware
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
