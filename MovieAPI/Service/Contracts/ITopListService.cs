@@ -9,4 +9,5 @@ public interface ITopListService
     Task<TopList> GetTopListByIdAsync(int topListId, string userId);
     Task UpdateTopListAsync(int topListId, string userId, List<int> movieIds);
     Task DeleteTopListAsync(int topListId, string userId);
+    
 }

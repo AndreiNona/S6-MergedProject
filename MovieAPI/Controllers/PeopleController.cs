@@ -12,7 +12,6 @@ namespace MovieAPI.Controllers;
 public class PeopleController :ControllerBase
 {
     private readonly IPeopleService _peopleService;
-    private readonly MovieDbContext _context;
 
     public PeopleController(IPeopleService peopleService)
     {
@@ -58,5 +57,19 @@ public class PeopleController :ControllerBase
         }
 
         return Ok(movies);
+    }
+    
+// GET: api/people/{personId}/role
+    [HttpGet("{personId}/role")]
+    public async Task<ActionResult> GetPersonRole(int personId)
+    {
+        var result = await _peopleService.GetPersonRole(personId);
+
+        if (result == null)
+        {
+            return NotFound("No movies found for the person.");
+        }
+
+        return Ok(result);
     }
 }

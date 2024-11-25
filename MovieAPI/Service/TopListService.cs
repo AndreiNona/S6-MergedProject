@@ -1,4 +1,5 @@
-﻿using MovieAPI.Data.Repository;
+﻿using System.ComponentModel.DataAnnotations;
+using MovieAPI.Data.Repository;
 using MovieAPI.Models;
 
 namespace MovieAPI.Data.Service;
@@ -41,12 +42,22 @@ public class TopListService : ITopListService
 
     public async Task UpdateTopListAsync(int topListId, string userId, List<int> movieIds)
     {
+        // Fetch the top list
         var topList = await GetTopListByIdAsync(topListId, userId);
-        if (topList != null)
+        if (topList == null)
         {
-            topList.MovieIds = movieIds;
-            await _topListRepository.UpdateTopListAsync(topList);
+            throw new KeyNotFoundException($"Top list with ID {topListId} not found for user {userId}.");
         }
+
+        // Validate 
+        if (movieIds.Distinct().Count() != movieIds.Count)
+        {
+            throw new ValidationException("The top list contains duplicate movies. Please remove duplicates before updating.");
+        }
+
+        // Update the top list
+        topList.MovieIds = movieIds;
+        await _topListRepository.UpdateTopListAsync(topList);
     }
 
     public async Task DeleteTopListAsync(int topListId, string userId)

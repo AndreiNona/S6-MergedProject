@@ -40,4 +40,18 @@ public class PeopleRepository : IPeopleRepository
             .Select(d => d.Movie)
             .ToListAsync();
     }
+    public async Task<int> GetStarredMoviesCountByPerson(int personId)
+    {
+        return await _context.Stars
+            .Where(s => s.PersonId == personId)
+            .CountAsync();
+    }
+
+    public async Task<int> GetDirectedMoviesCountByPerson(int personId)
+    {
+        return await _context.Directors
+            .Where(d => d.PersonId == personId)
+            .CountAsync();
+    }
+    
 }

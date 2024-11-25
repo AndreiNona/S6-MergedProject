@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MovieAPI.Data.Service;
@@ -46,7 +47,7 @@ namespace MovieAPI.Controllers;
             return Ok(topLists);
         }
 
-        // PUT: api/toplist/{id}/update
+// PUT: api/toplist/{id}/update
         [HttpPut("{id}/update")]
         public async Task<IActionResult> UpdateTopList(int id, [FromBody] UpdateTopListRequest request)
         {
@@ -56,8 +57,24 @@ namespace MovieAPI.Controllers;
                 return Unauthorized();
             }
 
-            await _topListService.UpdateTopListAsync(id, userId, request.MovieIds);
-            return Ok("Top list updated successfully.");
+            try
+            {
+                await _topListService.UpdateTopListAsync(id, userId, request.MovieIds);
+                return Ok(new { Message = "Top list updated successfully." });
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Generic error handling
+                return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
+            }
         }
 
         // DELETE: api/toplist/{id}
@@ -72,6 +89,24 @@ namespace MovieAPI.Controllers;
 
             await _topListService.DeleteTopListAsync(id, userId);
             return Ok("Top list deleted successfully.");
+        }
+        // GET: api/toplist/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTopListById(int id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var topList = await _topListService.GetTopListByIdAsync(id, userId);
+            if (topList == null)
+            {
+                return NotFound("Top list not found or you don't have access.");
+            }
+
+            return Ok(topList);
         }
     }
 

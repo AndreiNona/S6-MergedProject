@@ -52,4 +52,26 @@ public class PeopleService : IPeopleService
 
         return movies;
     }
+    public async Task<object> GetPersonRole(int personId)
+    {
+        var starredMoviesCount = await _peopleRepository.GetStarredMoviesCountByPerson(personId);
+        var directedMoviesCount = await _peopleRepository.GetDirectedMoviesCountByPerson(personId);
+
+        var role = directedMoviesCount > starredMoviesCount ? "Director" : "Star";
+
+        var starredMovies = await _peopleRepository.GetMoviesStarredInByPerson(personId);
+        var directedMovies = await _peopleRepository.GetMoviesDirectedByPerson(personId);
+
+        if (!starredMovies.Any() && !directedMovies.Any())
+        {
+            return null;
+        }
+
+        return new
+        {
+            Role = role,
+            DirectedMovies = directedMovies,
+            StarredMovies = starredMovies
+        };
+    }
 }

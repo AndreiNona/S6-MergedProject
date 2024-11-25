@@ -63,6 +63,18 @@ builder.Services.AddScoped<IMovieDetailsService, MovieDetailsService>();
 builder.Services.AddScoped<ITopListService, TopListService>();
 builder.Services.AddScoped<ITopListRepository, TopListRepository>();
 
+// Add CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", builder =>
+    {
+        builder
+            .AllowAnyOrigin()   // Allow requests from any origin (You can restrict this to specific origins)
+            .AllowAnyMethod()   // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+            .AllowAnyHeader();  // Allow all headers
+    });
+});
+
 // Add Swagger generation services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -107,6 +119,9 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "MovieAPI v1");
     });
 }
+
+// Enable CORS middleware
+app.UseCors("AllowAllOrigins");
 
 app.UseAuthentication(); // Add Authentication Middleware
 app.UseAuthorization();
