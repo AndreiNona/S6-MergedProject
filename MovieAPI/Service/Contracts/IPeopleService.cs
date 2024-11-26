@@ -8,4 +8,5 @@ public interface IPeopleService
     Task<IEnumerable<Movie>> GetMoviesStarredInByPerson(int personId, bool includeOmdbDetails = false);
     Task<IEnumerable<Movie>> GetMoviesDirectedByPerson(int personId, bool includeOmdbDetails = false);
     Task<object> GetPersonRole(int personId);
+    Task<object> GetAverageRatingsForPerson(int personId);
 }

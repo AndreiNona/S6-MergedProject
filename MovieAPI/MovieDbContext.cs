@@ -16,6 +16,7 @@ public class MovieDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Star> Stars { get; set; }
     public DbSet<Director> Directors { get; set; }
     public DbSet<TopList> TopLists { get; set; } 
+    public DbSet<MovieRating> Ratings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

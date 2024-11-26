@@ -74,4 +74,24 @@ public class PeopleService : IPeopleService
             StarredMovies = starredMovies
         };
     }
+    public async Task<object> GetAverageRatingsForPerson(int personId)
+    {
+        var averageRatingStarred = await _peopleRepository.GetAverageRatingForStarredMovies(personId);
+        var averageRatingDirected = await _peopleRepository.GetAverageRatingForDirectedMovies(personId);
+
+        // Format the ratings and handle missing entries
+        var formattedStarredRating = averageRatingStarred.HasValue
+            ? Math.Round(averageRatingStarred.Value, 2).ToString("F2") // Format to 2 decimal places
+            : "N/A";
+
+        var formattedDirectedRating = averageRatingDirected.HasValue
+            ? Math.Round(averageRatingDirected.Value, 2).ToString("F2") // Format to 2 decimal places
+            : "N/A";
+
+        return new
+        {
+            AverageRatingStarred = formattedStarredRating,
+            AverageRatingDirected = formattedDirectedRating
+        };
+    }
 }

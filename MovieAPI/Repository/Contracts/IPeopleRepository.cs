@@ -9,4 +9,6 @@ public interface IPeopleRepository
     Task<IEnumerable<Movie>> GetMoviesDirectedByPerson(int personId);
     Task<int> GetStarredMoviesCountByPerson(int personId);
     Task<int> GetDirectedMoviesCountByPerson(int personId);
+    Task<double?> GetAverageRatingForStarredMovies(int personId);
+    Task<double?> GetAverageRatingForDirectedMovies(int personId);
 }

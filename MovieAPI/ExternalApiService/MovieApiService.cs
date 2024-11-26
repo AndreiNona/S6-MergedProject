@@ -23,7 +23,6 @@ namespace MovieAPI.Services
         // Method to get a complete OMDb movie object
         public async Task<OmdbMovie> GetMovieFromOmdb(int databaseId, string apiKey)
         {
-            // Format the ID
             string formattedId = FormatOmdbId(databaseId);
 
             // Construct the OMDb API URL
@@ -42,6 +41,11 @@ namespace MovieAPI.Services
                 PropertyNameCaseInsensitive = true
             });
 
+            // Add the databaseId to the OmdbMovie object
+            if (omdbMovie != null)
+            {
+                omdbMovie.DatabaseId = databaseId; 
+            }
             return omdbMovie;
         }
 

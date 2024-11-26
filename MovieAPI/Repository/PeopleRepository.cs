@@ -53,5 +53,42 @@ public class PeopleRepository : IPeopleRepository
             .Where(d => d.PersonId == personId)
             .CountAsync();
     }
+    public async Task<double?> GetAverageRatingForStarredMovies(int personId)
+    {
+        var query = _context.Ratings
+            .Join(
+                _context.Stars.Where(s => s.PersonId == personId),
+                rating => rating.MovieId,
+                star => star.MovieId,
+                (rating, star) => rating.Rating
+            );
+
+        // Check if there are any entries
+        if (!await query.AnyAsync())
+        {
+            return null; 
+        }
+
+        return await query.AverageAsync();
+    }
+
+    public async Task<double?> GetAverageRatingForDirectedMovies(int personId)
+    {
+        var query = _context.Ratings
+            .Join(
+                _context.Directors.Where(d => d.PersonId == personId),
+                rating => rating.MovieId,
+                director => director.MovieId,
+                (rating, director) => rating.Rating
+            );
+
+        // Check if there are any entries 
+        if (!await query.AnyAsync())
+        {
+            return null; 
+        }
+
+        return await query.AverageAsync();
+    }
     
 }

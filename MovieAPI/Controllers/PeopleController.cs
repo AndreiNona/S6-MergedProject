@@ -72,4 +72,16 @@ public class PeopleController :ControllerBase
 
         return Ok(result);
     }
+    // GET: api/people/{id}/average-ratings
+    [HttpGet("{id}/average-ratings")]
+    public async Task<IActionResult> GetAverageRatingsForPerson(int id)
+    {
+        var result = await _peopleService.GetAverageRatingsForPerson(id);
+        if (result == null)
+        {
+            return NotFound("No data found for the given person.");
+        }
+
+        return Ok(result);
+    }
 }
