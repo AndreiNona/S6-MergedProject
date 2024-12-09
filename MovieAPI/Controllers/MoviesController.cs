@@ -25,7 +25,7 @@ namespace MovieAPI.Controllers
             string name,
             [FromQuery] bool smartSearch = false,
             [FromQuery] bool wordComplete = true,
-            [FromQuery] int limit = 10,
+            [FromQuery] int limit = 25,
             [FromQuery] bool includeOmdbDetails = false)
         {
             var movies = await _movieService.SearchMoviesByName(name, smartSearch, wordComplete, limit, includeOmdbDetails);

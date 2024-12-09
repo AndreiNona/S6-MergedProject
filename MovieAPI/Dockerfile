@@ -1,30 +1,33 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
-
-
-# This stage is used to build the service project
+# Use the .NET SDK image for building the application
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
+
+# Set the working directory
 WORKDIR /src
-COPY ["MovieAPI/MovieAPI.csproj", "MovieAPI/"]
-RUN dotnet restore "./MovieAPI/MovieAPI.csproj"
+
+# Copy project file(s) and restore dependencies
+COPY ["MovieAPI.csproj", "./"]
+RUN dotnet restore "./MovieAPI.csproj"
+
+# Copy the rest of the application files
 COPY . .
-WORKDIR "/src/MovieAPI"
-RUN dotnet build "./MovieAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./MovieAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Build the application
+RUN dotnet build "./MovieAPI.csproj" -c Release -o /app/build
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
-FROM base AS final
+# Publish the application
+RUN dotnet publish "./MovieAPI.csproj" -c Release -o /app/publish
+
+# Use the ASP.NET Core Runtime image for running the application
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
+# Set the working directory
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+# Copy the published application from the build stage
+COPY --from=build /app/publish .
+
+# Expose port 8080
+EXPOSE 8080
+
+# Set the entry point for the container
 ENTRYPOINT ["dotnet", "MovieAPI.dll"]

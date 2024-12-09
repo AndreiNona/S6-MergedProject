@@ -12,11 +12,18 @@ using MovieAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load environment-specific configurations
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables();
+
 // Configure Authentication with JWT Bearer Tokens
 var jwtSettings = builder.Configuration.GetSection("JWT");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
-// Add services to the container.
+// Add services to the container
 builder.Services.AddControllers();
 
 // Register MovieApiService with HttpClient for making OMDb API requests
@@ -69,8 +76,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAllOrigins", builder =>
     {
         builder
-            .AllowAnyOrigin()   // Allow requests from any origin (You can restrict this to specific origins)
-            .AllowAnyMethod()   // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+            .AllowAnyOrigin()   // Allow requests from any origin
+            .AllowAnyMethod()   // Allow all HTTP methods
             .AllowAnyHeader();  // Allow all headers
     });
 });
